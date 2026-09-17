@@ -1,0 +1,36 @@
+{
+  "name": "@drive/api",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch --env-file-if-exists=../../.env src/server.ts",
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "@drive/shared": "*",
+    "busboy": "^1.6.0",
+    "connect-mongo": "^5.1.0",
+    "content-disposition": "^0.5.4",
+    "dotenv": "^16.6.0",
+    "express": "^5.1.0",
+    "express-rate-limit": "^8.1.0",
+    "express-session": "^1.18.0",
+    "helmet": "^8.1.0",
+    "mongodb": "^6.20.0",
+    "passport": "^0.7.0",
+    "passport-google-oauth20": "^2.0.0",
+    "zod": "^3.25.0"
+  },
+  "devDependencies": {
+    "@types/busboy": "^1.5.4",
+    "@types/content-disposition": "^0.5.9",
+    "@types/express": "^5.0.0",
+    "@types/express-session": "^1.18.0",
+    "@types/passport": "^1.0.17",
+    "@types/passport-google-oauth20": "^2.0.16",
+    "@types/supertest": "^6.0.3",
+    "supertest": "^7.1.0"
+  }
+}

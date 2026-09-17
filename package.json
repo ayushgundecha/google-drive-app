@@ -1,0 +1,35 @@
+{
+  "name": "drive",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "dev": "npm run build -w @drive/shared && concurrently -k \"npm run dev -w @drive/api\" \"npm run dev -w @drive/web\"",
+    "build": "npm run build -w @drive/shared && npm run build -w @drive/web && npm run build -w @drive/api",
+    "typecheck": "npm run build -w @drive/shared && npm run typecheck --workspaces --if-present",
+    "test": "npm run build -w @drive/shared && vitest run",
+    "test:e2e": "npm run build && playwright test",
+    "start": "node apps/api/dist/server.js",
+    "check": "npm run typecheck && npm test && npm run build",
+    "format": "prettier --write apps packages docs scripts e2e .github *.json *.yml *.md *.ts",
+    "format:check": "prettier --check apps packages docs scripts e2e .github *.json *.yml *.md *.ts"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
+    "@playwright/test": "^1.55.0",
+    "@types/node": "^22.0.0",
+    "concurrently": "^9.0.0",
+    "mongodb-memory-server": "^10.2.0",
+    "prettier": "^3.6.0",
+    "tsx": "^4.20.0",
+    "typescript": "^5.9.0",
+    "vitest": "^3.2.0"
+  }
+}

@@ -4,3 +4,14 @@
 *.db
 .beads-credential-key
 .beads/proxieddb/
+node_modules/
+dist/
+.env
+.env.*
+!.env.example
+uploads/
+coverage/
+test-results/
+playwright-report/
+.DS_Store
+*.log

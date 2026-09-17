@@ -1,0 +1,27 @@
+services:
+  - type: web
+    name: google-drive-app
+    runtime: docker
+    plan: free
+    healthCheckPath: /readyz
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: STORAGE_BACKEND
+        value: gridfs
+      - key: MONGODB_DB
+        value: drive
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: MONGODB_URI
+        sync: false
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: MAX_FILE_BYTES
+        value: '10485760'
+      - key: USER_QUOTA_BYTES
+        value: '52428800'
+      - key: TOTAL_QUOTA_BYTES
+        value: '314572800'

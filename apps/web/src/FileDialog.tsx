@@ -10,7 +10,7 @@ export function FileDialog({
   onClose,
   notify,
 }: {
-  action: FileAction;
+  action: Exclude<FileAction, 'preview'>;
   file: FileItem;
   onClose: () => void;
   notify: (message: string) => void;

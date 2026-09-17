@@ -136,3 +136,128 @@ test('main workspace and share dialog have no automated accessibility violations
       .violations,
   ).toEqual([]);
 });
+
+function previewPdf() {
+  const objects = [
+    '<< /Type /Catalog /Pages 2 0 R >>',
+    '<< /Type /Pages /Kids [3 0 R 4 0 R] /Count 2 >>',
+    '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 300 400] /Resources << /Font << /F1 7 0 R >> >> /Contents 5 0 R >>',
+    '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 300 400] /Resources << /Font << /F1 7 0 R >> >> /Contents 6 0 R >>',
+    ...['First page', 'Second page'].map((text) => {
+      const stream = `0.1 0.4 0.8 rg 20 20 100 100 re f BT /F1 18 Tf 30 300 Td (${text}) Tj ET`;
+      return `<< /Length ${stream.length} >>\nstream\n${stream}\nendstream`;
+    }),
+    '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>',
+  ];
+  let document = '%PDF-1.4\n';
+  const offsets = [0];
+  objects.forEach((object, index) => {
+    offsets.push(Buffer.byteLength(document));
+    document += `${index + 1} 0 obj\n${object}\nendobj\n`;
+  });
+  const start = Buffer.byteLength(document);
+  document += `xref\n0 ${objects.length + 1}\n0000000000 65535 f \n`;
+  document += offsets
+    .slice(1)
+    .map((offset) => `${String(offset).padStart(10, '0')} 00000 n \n`)
+    .join('');
+  document += `trailer\n<< /Size ${objects.length + 1} /Root 1 0 R >>\nstartxref\n${start}\n%%EOF`;
+  return Buffer.from(document);
+}
+
+test('real image thumbnails, PDF pages, unsupported files and private preview access', async ({
+  page,
+  context,
+  browser,
+}) => {
+  await signIn(context);
+  await page.goto('/drive');
+  const errors: string[] = [];
+  page.on('pageerror', (error) => errors.push(error.message));
+  const png = await page.evaluate(() => {
+    const canvas = document.createElement('canvas');
+    canvas.width = 320;
+    canvas.height = 200;
+    const ctx = canvas.getContext('2d')!;
+    ctx.fillStyle = '#204ac9';
+    ctx.fillRect(0, 0, 320, 200);
+    return canvas.toDataURL('image/png').split(',')[1];
+  });
+  await page.getByLabel('Upload files', { exact: true }).setInputFiles([
+    { name: 'Preview image.png', mimeType: 'image/png', buffer: Buffer.from(png, 'base64') },
+    { name: 'Preview pages.pdf', mimeType: 'application/pdf', buffer: previewPdf() },
+    {
+      name: 'Pretend image.jpg',
+      mimeType: 'image/jpeg',
+      buffer: Buffer.from('<script>window.previewAttack=true</script>'),
+    },
+    { name: 'Broken.pdf', mimeType: 'application/pdf', buffer: Buffer.from('%PDF-1.7\ninvalid') },
+  ]);
+  const card = page
+    .locator('article')
+    .filter({ has: page.getByRole('button', { name: 'Preview image.png', exact: true }) });
+  await expect(card.locator('img.image-thumbnail')).toBeVisible();
+  await expect
+    .poll(() => card.locator('img').evaluate((img: HTMLImageElement) => img.naturalWidth))
+    .toBe(320);
+  await page.getByRole('button', { name: 'Preview Preview image.png', exact: true }).click();
+  const image = page.getByRole('dialog').getByRole('img', { name: 'Preview image.png' });
+  await expect(image).toBeVisible();
+  await expect.poll(() => image.evaluate((img: HTMLImageElement) => img.naturalWidth)).toBe(320);
+  const { default: AxeBuilder } = await import('@axe-core/playwright');
+  expect(
+    (await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa']).analyze())
+      .violations,
+  ).toEqual([]);
+  await page.screenshot({ path: 'test-results/image-preview.png', fullPage: true });
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await expect(
+    page.getByRole('button', { name: 'Preview Preview image.png', exact: true }),
+  ).toBeFocused();
+  await page.getByRole('button', { name: 'Preview pages.pdf', exact: true }).click();
+  await expect(page.getByText('Page 1 of 2', { exact: true })).toBeVisible();
+  await expect(page.getByRole('img', { name: 'PDF page 1', exact: true })).toBeVisible();
+  await expect(page.getByText('First page', { exact: true })).toHaveCount(1);
+  await page.getByRole('button', { name: 'Next page', exact: true }).click();
+  await expect(page.getByRole('img', { name: 'PDF page 2', exact: true })).toBeVisible();
+  await expect(page.getByText('Second page', { exact: true })).toHaveCount(1);
+  await expect(page.getByRole('button', { name: 'Next page', exact: true })).toBeDisabled();
+  await page.setViewportSize({ width: 375, height: 812 });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.screenshot({ path: 'test-results/pdf-preview-mobile.png', fullPage: true });
+  await page.keyboard.press('Escape');
+  await page.getByRole('button', { name: 'Pretend image.jpg', exact: true }).click();
+  await expect(page.getByText('No preview available', { exact: true })).toBeVisible();
+  expect(await page.evaluate(() => 'previewAttack' in window)).toBe(false);
+  const download = page.waitForEvent('download');
+  await page.getByRole('dialog').getByRole('button', { name: 'Download', exact: true }).click();
+  expect((await download).suggestedFilename()).toBe('Pretend image.jpg');
+  await page.keyboard.press('Escape');
+  await page.getByRole('button', { name: 'Broken.pdf', exact: true }).click();
+  await expect(page.getByRole('dialog').getByRole('alert')).toContainText('could not be opened');
+  await page.keyboard.press('Escape');
+  await page.setViewportSize({ width: 1440, height: 960 });
+  await page.getByRole('button', { name: 'Actions for Preview image.png' }).click();
+  await page.getByRole('menuitem', { name: 'Share', exact: true }).click();
+  await page.getByLabel('Add a person').fill('bob@example.com');
+  await page.getByRole('button', { name: 'Share', exact: true }).click();
+  await expect(page.getByText('bob@example.com', { exact: true })).toBeVisible();
+  const other = await browser.newContext();
+  await signIn(other, 'bob');
+  const recipient = await other.newPage();
+  await recipient.goto('/shared');
+  await recipient.getByRole('button', { name: 'Preview image.png', exact: true }).click();
+  await expect(
+    recipient.getByRole('dialog').getByRole('img', { name: 'Preview image.png' }),
+  ).toBeVisible();
+  await recipient.keyboard.press('Escape');
+  await page.getByRole('button', { name: 'Remove', exact: true }).click();
+  await expect(page.getByText('bob@example.com', { exact: true })).toHaveCount(0);
+  await recipient.getByRole('button', { name: 'Preview image.png', exact: true }).click();
+  await expect(recipient.getByRole('dialog').getByRole('alert')).toContainText(
+    'no longer have access',
+  );
+  await other.close();
+  expect(errors).toEqual([]);
+});

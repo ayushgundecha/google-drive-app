@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { useRef, type ReactNode } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
 import * as Menu from '@radix-ui/react-dropdown-menu';
 import {
@@ -67,12 +67,15 @@ export function Modal({
   description,
   children,
   onClose,
+  className = '',
 }: {
   title: string;
   description: string;
   children: ReactNode;
   onClose: () => void;
+  className?: string;
 }) {
+  const opener = useRef(document.activeElement);
   return (
     <Dialog.Root
       open
@@ -82,7 +85,15 @@ export function Modal({
     >
       <Dialog.Portal>
         <Dialog.Overlay className="modal-overlay" />
-        <Dialog.Content className="modal">
+        <Dialog.Content
+          className={`modal ${className}`}
+          onCloseAutoFocus={(event) => {
+            if (opener.current instanceof HTMLElement && opener.current.isConnected) {
+              event.preventDefault();
+              opener.current.focus();
+            }
+          }}
+        >
           <div className="modal-heading">
             <Dialog.Title>{title}</Dialog.Title>
             <Dialog.Close className="icon-button" aria-label="Close dialog">
@@ -121,7 +132,7 @@ export function FileGlyph({ name, large = false }: { name: string; large?: boole
     </span>
   );
 }
-export type FileAction = 'rename' | 'share' | 'delete' | 'info';
+export type FileAction = 'rename' | 'share' | 'delete' | 'info' | 'preview';
 export function FileMenu({
   file,
   onAction,
@@ -141,10 +152,9 @@ export function FileMenu({
       </Menu.Trigger>
       <Menu.Portal>
         <Menu.Content className="file-menu" align="end" sideOffset={6}>
-          <Menu.Item className="menu-item" disabled>
+          <Menu.Item className="menu-item" onSelect={() => onAction('preview', file)}>
             <ExternalLink size={18} />
-            Open with
-            <ChevronRight size={16} className="menu-end" />
+            Preview
           </Menu.Item>
           <Menu.Separator />
           <Menu.Item className="menu-item" onSelect={() => onDownload(file)}>

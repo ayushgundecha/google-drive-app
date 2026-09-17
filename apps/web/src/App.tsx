@@ -44,6 +44,7 @@ import {
 import type { FileItem, FileList, Me } from '@drive/shared';
 import { Avatar, DriveMark, FileGlyph, Unavailable, type FileAction } from './components';
 import { FileDialog } from './FileDialog';
+import { FilePreview } from './FilePreview';
 import { bytes, mutate, request, RequestError } from './api';
 export function App() {
   const me = useQuery({
@@ -566,13 +567,23 @@ function Drive({ me }: { me: Me }) {
           </div>
         </section>
       )}
-      {dialog && (
-        <FileDialog
-          key={`${dialog.action}-${dialog.file.id}`}
-          {...dialog}
+      {dialog?.action === 'preview' ? (
+        <FilePreview
+          key={dialog.file.id}
+          file={dialog.file}
           onClose={() => setDialog(null)}
-          notify={setToast}
+          download={download}
         />
+      ) : (
+        dialog && (
+          <FileDialog
+            key={`${dialog.action}-${dialog.file.id}`}
+            action={dialog.action}
+            file={dialog.file}
+            onClose={() => setDialog(null)}
+            notify={setToast}
+          />
+        )
       )}
       <div className={`toast ${toast ? 'visible' : ''}`} role="status" aria-live="polite">
         {toast}

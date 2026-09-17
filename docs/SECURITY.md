@@ -17,7 +17,7 @@
 
 ## Limits
 
-Files are not scanned for malware. Downloaded files should be handled as untrusted content. There are no public anonymous links, content previews, inline HTML rendering, or executable document integrations.
+Files are not scanned for malware. Downloaded files should be handled as untrusted content. There are no public anonymous links, inline HTML rendering, or executable document integrations. Previews fetch the same authenticated attachment endpoint with no persistent browser cache. A byte signature selects a supported raster-image decoder or PDF.js canvas rendering; uploader MIME hints cannot select HTML/SVG rendering. PDF JavaScript, interactive annotations and XFA are not executed. PDF.js is lazy-loaded with a same-origin worker; CSP keeps scripts restricted to self and permits blob URLs only for images. Object URLs are revoked and requests cancelled when viewers unmount. Corrupt, password-protected and unsupported documents have a download fallback.
 
 Revocation blocks future requests. It cannot erase a downloaded copy or stop a response already authorized and streaming. Permanent deletion has no undo; the UI explicitly confirms this behavior.
 

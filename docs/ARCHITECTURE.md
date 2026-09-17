@@ -99,3 +99,11 @@ MongoDB stores MIME information supplied by the uploader as a hint, not as a tru
 One Docker image contains the Express server and built React assets. Render runs that image; MongoDB Atlas persists data. Local Docker Compose supplies MongoDB and a persistent filesystem volume. Switching `STORAGE_BACKEND` affects new uploads only; existing local files still require their original disk. Moving a local installation to GridFS is not an automatic migration.
 
 This is designed for a small personal service with one application instance. In-memory request limiting and the single quota ledger are deliberate simplicity choices. Larger deployments should use shared rate-limit storage, scalable quota accounting, object storage, direct uploads, a durable cleanup worker, and content scanning. These are extensions, not prerequisites for the current scope.
+
+## File previews
+
+Cards load image content when near the viewport. Clicking a filename, card or Preview menu action opens an accessible dialog. Each dialog fetches `/api/files/:id/download` afresh, so server ownership and sharing checks also protect previews. No extra public route or database migration is needed; existing uploads work immediately.
+
+The browser checks byte signatures, creates temporary raster-image blob URLs, and renders PDFs with PDF.js and its bundled worker. PDF rendering is canvas-only, with extracted page text for assistive technology and previous/next controls. The PDF library is loaded only when a PDF is opened. Canvas dimensions are bounded; unsupported or damaged files retain the original download action.
+
+For this small-file deployment, thumbnails fetch the original image rather than generating and storing derivative files. This trades implementation simplicity for bandwidth on image-heavy pages. A future larger deployment should generate size-limited thumbnails in storage. Revoking access blocks fresh previews but cannot erase content already fetched into an open page.

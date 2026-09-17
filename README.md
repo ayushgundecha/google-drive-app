@@ -1,5 +1,7 @@
 # Drive
 
+[Open the live application](https://google-drive-app-1ses.onrender.com)
+
 A personal file workspace with Google sign-in, private uploads, filename search, and sharing with other users. The dark, responsive interface includes grid and list views, drag-and-drop uploads, progress feedback, and keyboard-accessible dialogs and menus.
 
 Built with TypeScript, React, Vite, Express, and MongoDB. One Node process serves the frontend and API. A storage adapter supports a private local directory or MongoDB GridFS.
@@ -13,12 +15,13 @@ _Interface shown with temporary example files. [Mobile view](docs/screenshots/dr
 - Google OAuth with server-side sessions and CSRF protection.
 - Upload one or several files, with per-file progress and cancellation.
 - Download, rename, search, and permanently delete owned files.
+- Open images and PDFs in a private preview dialog; browse PDF pages.
 - Share with registered Google users as viewers; revoke access at any time.
 - Private-by-default files, checked on every metadata and download request.
 - Storage quotas, bounded streaming, failed-upload cleanup, and restart recovery.
 - Docker Compose for local use and a Render Blueprint for hosting.
 
-Navigation and tools outside this feature set are visibly unavailable. Folders, trash/restore, stars, Google integrations, file-content previews, and offline access are not implemented. File-card artwork indicates file type; it is not a preview of file contents. The project is independent and is not affiliated with Google.
+Navigation and tools outside this feature set are visibly unavailable. Images (JPEG, PNG, GIF, WebP and AVIF) have real thumbnails and an in-app viewer. PDFs open in a paginated viewer. Other formats show a download fallback. Folders, trash/restore, stars, Google integrations, and offline access are not implemented. Non-image cards use file-type artwork. The project is independent and is not affiliated with Google.
 
 ## Run locally
 
@@ -115,7 +118,7 @@ npm run format:check
 
 Integration tests start a real temporary MongoDB process using `mongodb-memory-server`; the first run downloads a MongoDB binary. No Atlas credentials are needed. Browser tests run the built app against a separate temporary database with two isolated users. They do not automate the Google sign-in provider.
 
-The integration suite covers both storage adapters, exact download bytes, ownership, sharing and revocation, literal search, validation, quotas under concurrency, size boundaries, and recovery after storage failures. Browser tests cover the complete user workflow, mobile layout, and keyboard menus.
+The integration suite covers both storage adapters, exact download bytes, ownership, sharing and revocation, literal search, validation, quotas under concurrency, size boundaries, and recovery after storage failures. Browser tests cover the complete user workflow, mobile layout, keyboard menus, real image decoding, PDF page navigation, unsupported and corrupt content, and preview access after sharing and revocation.
 
 ## Project structure
 

@@ -1,3 +1,4 @@
+import { FileThumbnail } from './FileThumbnail';
 import type { FileItem } from '@drive/shared';
 import { FileGlyph, FileMenu, type FileAction } from './components';
 import { bytes, date } from './api';
@@ -20,25 +21,17 @@ export function FileCollection({
         <article className="file-card" key={file.id}>
           <div className="card-heading">
             <FileGlyph name={file.name} />
-            <button className="file-name" title={file.name} onClick={() => action('info', file)}>
+            <button className="file-name" title={file.name} onClick={() => action('preview', file)}>
               {file.name}
             </button>
             <FileMenu file={file} onAction={action} onDownload={(file) => void download(file)} />
           </div>
           <button
             className="file-preview"
-            aria-label={`View information for ${file.name}`}
-            onClick={() => action('info', file)}
+            aria-label={`Preview ${file.name}`}
+            onClick={() => action('preview', file)}
           >
-            <div className="paper-preview">
-              <FileGlyph name={file.name} large />
-              <span>{file.name.split('.').pop()?.slice(0, 8).toUpperCase() || 'FILE'}</span>
-              <div className="paper-lines">
-                <i />
-                <i />
-                <i />
-              </div>
-            </div>
+            <FileThumbnail file={file} />
           </button>
           <div className="card-footer">
             <span>{bytes(file.size)}</span>
@@ -67,7 +60,7 @@ export function FileCollection({
               <td>
                 <div className="table-name">
                   <FileGlyph name={file.name} />
-                  <button onClick={() => action('info', file)} title={file.name}>
+                  <button onClick={() => action('preview', file)} title={file.name}>
                     {file.name}
                   </button>
                 </div>

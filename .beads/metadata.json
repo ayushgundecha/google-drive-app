@@ -1,0 +1,7 @@
+{
+  "database": "dolt",
+  "backend": "dolt",
+  "dolt_mode": "embedded",
+  "dolt_database": "google_drive",
+  "project_id": "5f6df40f-a208-4d4b-858c-f0ad45b55fe2"
+}

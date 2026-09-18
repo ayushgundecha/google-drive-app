@@ -994,8 +994,8 @@ tr:hover td {
 .login-card {
   margin: auto;
   text-align: center;
-  max-width: 580px;
-  padding: 25px 28px 70px;
+  width: min(100%, 680px);
+  padding: 25px 24px 48px;
 }
 .login-symbol {
   width: 100px;
@@ -1019,6 +1019,10 @@ tr:hover td {
   line-height: 1.15;
   letter-spacing: -1.5px;
   font-weight: 400;
+}
+.login-card h1 span {
+  display: block;
+  text-wrap: balance;
 }
 .login-card > p {
   color: #aab1bb;
@@ -1478,5 +1482,7 @@ tr:hover td {
   border: 1px solid #365d45;
   padding: 12px 18px;
   border-radius: 12px;
-  margin: 0 0 20px;
+  width: fit-content;
+  max-width: 100%;
+  margin: 0 auto 20px;
 }

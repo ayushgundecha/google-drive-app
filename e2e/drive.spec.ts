@@ -104,11 +104,15 @@ test('responsive layout, keyboard interaction and unavailable controls', async (
   await expect(page.getByRole('button', { name: 'Actions for Notes.txt' })).toBeFocused();
 });
 test('signed-out users see Google authentication', async ({ page }) => {
-  await page.goto('/');
+  await page.goto('/?signedOut=1');
   await expect(page.getByRole('link', { name: 'Continue with Google' })).toHaveAttribute(
     'href',
     '/auth/google',
   );
+  await page.setViewportSize({ width: 1440, height: 960 });
+  await page.screenshot({ path: 'test-results/login-desktop.png', fullPage: true });
+  await page.setViewportSize({ width: 375, height: 812 });
+  await page.screenshot({ path: 'test-results/login-mobile.png', fullPage: true });
 });
 
 test('main workspace and share dialog have no automated accessibility violations', async ({

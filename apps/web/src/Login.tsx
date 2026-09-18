@@ -17,9 +17,8 @@ export function Login() {
         </div>
         <div className="eyebrow">A LITTLE SPACE FOR EVERYTHING</div>
         <h1>
-          Your files.
-          <br />
-          Right where you need them.
+          <span>Your files.</span>
+          <span>Right where you need them.</span>
         </h1>
         <p>
           A private home for your documents, ideas, and everyday essentials. Keep them together.

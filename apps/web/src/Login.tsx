@@ -2,7 +2,9 @@ import { useLocation } from 'react-router-dom';
 import { Cloud, ShieldCheck } from 'lucide-react';
 import { DriveMark } from './components';
 export function Login() {
-  const error = new URLSearchParams(useLocation().search).get('authError');
+  const params = new URLSearchParams(useLocation().search);
+  const error = params.get('authError');
+  const signedOut = params.get('signedOut') === '1';
   return (
     <div className="login-page">
       <header>
@@ -23,6 +25,11 @@ export function Login() {
           A private home for your documents, ideas, and everyday essentials. Keep them together.
           Share them with your people.
         </p>
+        {signedOut && (
+          <p role="status" className="signed-out-message">
+            You’ve signed out of Drive.
+          </p>
+        )}
         <a className="google-button" href="/auth/google">
           <img src="/brand/google.png" alt="" width="24" height="24" />
           Continue with Google

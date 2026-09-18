@@ -31,13 +31,13 @@ The MongoDB native driver provides both metadata access and GridFS without an ad
 ## Authentication
 
 1. The browser navigates to `/auth/google`.
-2. Passport creates an OAuth state value in a MongoDB-backed session and redirects to Google.
+2. Passport creates an OAuth state value in a MongoDB-backed session and redirects to Google with `prompt=select_account`, so each sign-in asks the user to choose an account.
 3. Google redirects to the configured callback. Passport validates the state and retrieves the identity profile.
 4. The app requires a verified email and upserts the account by Google's stable identifier. It does not merge unrelated identities based only on email.
 5. Passport establishes a login session. Only the internal user ID is serialized; subsequent requests load the user from MongoDB.
 6. The browser receives an HttpOnly session cookie. Production uses Secure and SameSite=Lax.
 
-No Google access or refresh tokens are retained. The app stores its own files and does not access a user's Google Drive. Sessions expire after seven days; logout destroys the server-side session and clears the cookie.
+No Google access or refresh tokens are retained. The app stores its own files and does not access a user's Google Drive. Sessions expire after seven days; logout destroys the server-side session and clears the cookie. The UI shows a pending state, reports failures, and replaces the current document with the signed-out page after success, discarding private client state. Signing out of Drive does not sign out of Google; Google may reuse an existing provider session after the user chooses an account.
 
 ## Upload lifecycle
 

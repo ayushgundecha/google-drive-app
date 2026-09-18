@@ -332,6 +332,7 @@ it('rejects a mismatched Google OAuth state without contacting the token endpoin
   const target = new URL(started.headers.location);
   expect(target.hostname).toBe('accounts.google.com');
   expect(target.searchParams.get('state')).toBeTruthy();
+  expect(target.searchParams.get('prompt')).toBe('select_account');
   const callback = await agent.get('/auth/google/callback?state=invalid&code=invalid').expect(302);
   expect(callback.headers.location).toBe('/?authError=failed');
   await agent.get('/api/me').expect(401);
@@ -379,4 +380,36 @@ it('cleans a real disconnected upload without keeping file bytes or quota', asyn
     server.closeAllConnections();
     await new Promise<void>((resolve) => server.close(() => resolve()));
   }
+});
+
+it('logout destroys the authenticated session, expires its cookie and rejects cookie replay', async () => {
+  const { app } = build();
+  const agent = supertest.agent(app);
+  const started = await agent
+    .get('/api/csrf')
+    .set('x-test-user', alice._id.toHexString())
+    .expect(200);
+  const cookie = started.headers['set-cookie'][0].split(';')[0];
+  const sessions = db.collection('sessions');
+  const stored = await sessions.findOne({});
+  const session = JSON.parse(stored!.session);
+  session.passport = { user: alice._id.toHexString() };
+  await sessions.updateOne({ _id: stored!._id }, { $set: { session: JSON.stringify(session) } });
+  // No test header: subsequent requests authenticate from the real Passport session.
+  await agent.get('/api/me').expect(200);
+  await agent.post('/auth/logout').expect(403);
+  await agent.get('/api/me').expect(200);
+  const response = await agent
+    .post('/auth/logout')
+    .set('x-csrf-token', started.body.token)
+    .expect(204);
+  expect(
+    response.headers['set-cookie'].some(
+      (value: string) =>
+        value.startsWith('drive.sid=;') && value.includes('Expires=Thu, 01 Jan 1970'),
+    ),
+  ).toBe(true);
+  expect(await sessions.countDocuments({ _id: stored!._id })).toBe(0);
+  await agent.get('/api/me').expect(401);
+  await supertest(app).get('/api/files').set('Cookie', cookie).expect(401);
 });

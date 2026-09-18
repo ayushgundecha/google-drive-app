@@ -119,7 +119,11 @@ export function createApp({
     rateLimit({ windowMs: 60000, limit: 20, standardHeaders: 'draft-8', legacyHeaders: false }),
     (req, res, next) => {
       if (!config.GOOGLE_CLIENT_ID) return res.redirect('/?authError=unconfigured');
-      passport.authenticate('google', { scope: ['profile', 'email'] })(req, res, next);
+      passport.authenticate('google', { scope: ['profile', 'email'], prompt: 'select_account' })(
+        req,
+        res,
+        next,
+      );
     },
   );
   app.get(

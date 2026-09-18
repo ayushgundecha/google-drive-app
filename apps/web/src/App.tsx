@@ -3,7 +3,7 @@ import { FileCollection } from './FileCollection';
 import { useUploads } from './useUploads';
 import { useEffect, useRef, useState, type DragEvent } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Navigate, NavLink, useLocation, useNavigate } from 'react-router-dom';
+import { Navigate, NavLink, useLocation } from 'react-router-dom';
 import * as Menu from '@radix-ui/react-dropdown-menu';
 import {
   Search,
@@ -78,7 +78,6 @@ export function App() {
 }
 function Drive({ me }: { me: Me }) {
   const location = useLocation();
-  const navigate = useNavigate();
   const client = useQueryClient();
   const shared = location.pathname === '/shared';
   const [search, setSearch] = useState('');
@@ -94,6 +93,7 @@ function Drive({ me }: { me: Me }) {
   const [sidebar, setSidebar] = useState(false);
   const [dialog, setDialog] = useState<{ action: FileAction; file: FileItem } | null>(null);
   const [toast, setToast] = useState('');
+  const [signingOut, setSigningOut] = useState(false);
   const { uploads, uploading, uploadFiles, cancel, dismiss } = useUploads(me, setToast);
   const [dragging, setDragging] = useState(false);
   const picker = useRef<HTMLInputElement>(null);
@@ -158,18 +158,32 @@ function Drive({ me }: { me: Me }) {
     }
   }
   async function logout() {
+    if (signingOut) return;
     if (uploading) {
       setToast('Finish or cancel your uploads before signing out.');
       return;
     }
+    setSigningOut(true);
     try {
       await mutate('/auth/logout', 'POST');
+      await client.cancelQueries();
       client.clear();
-      navigate('/');
+      // A fresh document drops all in-memory private content and replaces this history entry.
+      window.location.replace('/?signedOut=1');
     } catch (error) {
-      setToast((error as Error).message);
+      setSigningOut(false);
+      setToast(`Could not sign out. ${(error as Error).message}`);
     }
   }
+  if (signingOut)
+    return (
+      <main className="app-loading" role="status" aria-live="polite" aria-busy="true">
+        <DriveMark />
+        <LoaderCircle className="spin" aria-hidden="true" />
+        <h1>Signing you out…</h1>
+        <p>Please wait while we securely end your session.</p>
+      </main>
+    );
   const files = listing.data?.files ?? [];
   return (
     <div

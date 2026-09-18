@@ -1471,3 +1471,12 @@ tr:hover td {
   margin: auto;
   background: white;
 }
+
+.login-card .signed-out-message {
+  color: #b7e6c7;
+  background: #20372a;
+  border: 1px solid #365d45;
+  padding: 12px 18px;
+  border-radius: 12px;
+  margin: 0 0 20px;
+}

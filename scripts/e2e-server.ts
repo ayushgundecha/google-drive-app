@@ -41,11 +41,17 @@ const { app } = createApp({
   db,
   client,
   config,
-  testMiddleware: (req, _res, next) => {
+  testMiddleware: (req, res, next) => {
     const cookie = req.headers.cookie ?? '';
-    if (cookie.includes('test-user=alice')) req.user = alice;
-    if (cookie.includes('test-user=bob')) req.user = bob;
-    next();
+    const user = cookie.includes('test-user=alice')
+      ? alice
+      : cookie.includes('test-user=bob')
+        ? bob
+        : null;
+    if (!user) return next();
+    // Seed once, then exercise actual Passport sessions, including logout.
+    res.clearCookie('test-user', { path: '/' });
+    req.logIn(user, next);
   },
 });
 const server = app.listen(3100, '127.0.0.1', () => console.log('Browser fixture ready'));

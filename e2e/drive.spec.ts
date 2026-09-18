@@ -261,3 +261,41 @@ test('real image thumbnails, PDF pages, unsupported files and private preview ac
   await other.close();
   expect(errors).toEqual([]);
 });
+
+test('sign-out shows progress, recovers on failure and removes the authenticated session', async ({
+  page,
+  context,
+}) => {
+  await signIn(context);
+  await page.goto('/drive');
+  await expect(page.getByRole('heading', { name: 'My Drive', exact: true })).toBeVisible();
+  let release!: () => void;
+  const pending = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  await page.route('**/auth/logout', async (route) => {
+    await pending;
+    await route.fulfill({
+      status: 500,
+      contentType: 'application/json',
+      body: JSON.stringify({ error: { message: 'Please try again.' } }),
+    });
+  });
+  await page.getByRole('button', { name: 'Account menu' }).click();
+  await page.getByRole('menuitem', { name: 'Sign out', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Signing you out…' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Account menu' })).toHaveCount(0);
+  release();
+  await expect(page.getByRole('status')).toContainText('Could not sign out. Please try again.');
+  expect((await context.request.get('/api/me')).status()).toBe(200);
+  await page.unroute('**/auth/logout');
+  await page.getByRole('button', { name: 'Account menu' }).click();
+  await page.getByRole('menuitem', { name: 'Sign out', exact: true }).click();
+  await expect(page.getByRole('link', { name: 'Continue with Google' })).toBeVisible();
+  await expect(page.getByRole('status')).toHaveText('You’ve signed out of Drive.');
+  expect((await context.request.get('/api/me')).status()).toBe(401);
+  expect((await context.cookies()).some((cookie) => cookie.name === 'drive.sid')).toBe(false);
+  await page.goto('/drive');
+  await expect(page.getByRole('link', { name: 'Continue with Google' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'My Drive', exact: true })).toHaveCount(0);
+});
